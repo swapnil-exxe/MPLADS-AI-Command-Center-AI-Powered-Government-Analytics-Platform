@@ -40,7 +40,7 @@ pythonProcess.on('close', (code) => {
   console.log(`[Node.js Server] Python subservice exited with code ${code}`);
 });
 
-// 2. HTTP Proxy Setup for FastAPI Endpoints (Preserves /api prefix)
+// 2. HTTP Proxy Setup for FastAPI Endpoints (Preserves /api prefix using req.originalUrl)
 let httpProxy;
 try {
   httpProxy = require('http-proxy-middleware');
@@ -51,24 +51,23 @@ try {
 if (httpProxy && httpProxy.createProxyMiddleware) {
   const createProxy = httpProxy.createProxyMiddleware;
   
-  // Custom proxy middleware preserving path
   const apiProxy = createProxy({
     target: `http://127.0.0.1:${PYTHON_PORT}`,
     changeOrigin: true,
   });
 
   app.use('/api', (req, res, next) => {
-    req.url = '/api' + req.url; // Restore /api prefix for FastAPI router matching
+    req.url = req.originalUrl;
     apiProxy(req, res, next);
   });
 
   app.use('/docs', (req, res, next) => {
-    req.url = '/docs' + req.url;
+    req.url = req.originalUrl;
     apiProxy(req, res, next);
   });
 
   app.use('/openapi.json', (req, res, next) => {
-    req.url = '/openapi.json' + req.url;
+    req.url = req.originalUrl;
     apiProxy(req, res, next);
   });
 }
