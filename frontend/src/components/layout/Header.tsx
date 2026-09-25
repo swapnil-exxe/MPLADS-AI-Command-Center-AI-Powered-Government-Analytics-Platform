@@ -11,13 +11,27 @@ export const Header: React.FC = () => {
   const [dbHealthy, setDbHealthy] = useState<boolean | null>(null);
 
   useEffect(() => {
-    healthService
-      .getHealth()
-      .then((res) => {
-        setDbHealthy(res.status === 'healthy');
-        setDbLatency(res.db_latency_ms);
-      })
-      .catch(() => setDbHealthy(false));
+    let isMounted = true;
+    const checkHealth = () => {
+      healthService
+        .getHealth()
+        .then((res) => {
+          if (isMounted) {
+            setDbHealthy(res.status === 'healthy');
+            setDbLatency(res.db_latency_ms);
+          }
+        })
+        .catch(() => {
+          if (isMounted) setDbHealthy(false);
+        });
+    };
+
+    checkHealth();
+    const interval = setInterval(checkHealth, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const handleLogout = () => {

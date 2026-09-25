@@ -127,19 +127,33 @@ export const SubhoChatbot: React.FC = () => {
         .slice(-6)
         .map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }));
 
-      let res = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ message: text, history })
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-      if (res.status === 401 && endpoint !== fallbackEndpoint) {
-        // Fallback to public-chat if authenticated token is expired or invalid
-        res = await fetch(fallbackEndpoint, {
+      let res: Response;
+      try {
+        res = await fetch(endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, history })
+          headers,
+          body: JSON.stringify({ message: text, history }),
+          signal: controller.signal
         });
+      } catch (fetchErr) {
+        if (endpoint !== fallbackEndpoint) {
+          const fallbackCtrl = new AbortController();
+          const fallbackTimer = setTimeout(() => fallbackCtrl.abort(), 4000);
+          res = await fetch(fallbackEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, history }),
+            signal: fallbackCtrl.signal
+          });
+          clearTimeout(fallbackTimer);
+        } else {
+          throw fetchErr;
+        }
+      } finally {
+        clearTimeout(timeoutId);
       }
 
       if (!res.ok) {

@@ -22,27 +22,26 @@ def trigger_manual_ingestion(
     db: Session = Depends(get_db)
 ):
     """
-    Manually triggers an on-demand live eSAKSHI ingestion run.
-    Returns 409 Conflict if an ingestion run is already in progress.
+    Manually triggers an on-demand live eSAKSHI ingestion run in background task.
+    Returns 200 OK immediately with job status.
     """
     user_email = current_user.email if current_user else "demo_public_user@mplads.gov.in"
     logger.info(f"Manual ingestion trigger requested by {user_email}")
     
-    try:
-        pipeline = LiveScraperPipeline(db_session=db)
-        result = pipeline.run_pipeline()
-        return {
-            "status": "success",
-            "message": "Live ingestion run completed successfully.",
-            "details": result.model_dump(mode="json")
-        }
-    except RuntimeError as re:
-        if "already in progress" in str(re):
-            raise HTTPException(status_code=409, detail=str(re))
-        raise HTTPException(status_code=500, detail=str(re))
-    except Exception as e:
-        logger.error(f"Ingestion run failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Ingestion run failed: {str(e)}")
+    def _run_bg():
+        try:
+            pipeline = LiveScraperPipeline(db_session=db)
+            pipeline.run_pipeline()
+        except Exception as e:
+            logger.error(f"Background ingestion run failed: {e}", exc_info=True)
+
+    background_tasks.add_task(_run_bg)
+    return {
+        "status": "success",
+        "message": "Live eSAKSHI ingestion run initiated successfully in background.",
+        "target_url": scraper_settings.TARGET_URL,
+        "initiated_at": datetime.now().isoformat()
+    }
 
 @router.get("/status")
 def get_scraper_pipeline_status(
