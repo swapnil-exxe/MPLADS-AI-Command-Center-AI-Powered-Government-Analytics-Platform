@@ -61,6 +61,7 @@ def get_warnings_df() -> pd.DataFrame:
     return _df_warnings
 
 
+@router.get("/trends", response_model=NationalTrendsResponse)
 @router.get("/trends/national", response_model=NationalTrendsResponse)
 def get_national_trends(
     current_user: OptionalUser = None

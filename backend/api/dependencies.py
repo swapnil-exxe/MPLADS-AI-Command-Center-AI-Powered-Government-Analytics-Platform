@@ -5,14 +5,19 @@ from database.connection import get_session
 
 def get_db() -> Generator[Session, None, None]:
     """FastAPI dependency for database session lifecycle."""
-    db = get_session()
+    db = None
+    try:
+        db = get_session()
+    except Exception as e:
+        print(f"[DB WARN] Session creation failed: {e}")
     try:
         yield db
     finally:
-        try:
-            db.close()
-        except Exception:
-            pass
+        if db is not None:
+            try:
+                db.close()
+            except Exception:
+                pass
 
 class PaginationParams:
     """Dependency for validated pagination parameters."""

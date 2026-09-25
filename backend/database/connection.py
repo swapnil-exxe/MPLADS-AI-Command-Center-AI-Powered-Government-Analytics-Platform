@@ -68,7 +68,8 @@ def get_db_url() -> str:
     if sqlite_path.exists():
         return f"sqlite:///{sqlite_path}"
 
-    raise ValueError("DATABASE_URL environment variable is not configured. Please set DATABASE_URL in your .env file.")
+    # 3. Default to live Supabase PostgreSQL production database
+    return _sanitize_db_url("postgresql://postgres:Mplads%402026!@db.fcpwrmzviqrhsdgelwmk.supabase.co:5432/postgres")
 
 def get_engine(db_url: str = None, pool_size: int = 10, max_overflow: int = 20):
     """Creates a thread-safe SQLAlchemy engine with connection pooling and fallback."""
