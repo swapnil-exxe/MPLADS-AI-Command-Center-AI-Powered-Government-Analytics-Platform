@@ -18,13 +18,15 @@ class Settings:
     @property
     def CORS_ORIGINS(self) -> list[str]:
         raw = os.getenv("CORS_ORIGINS", "")
+        if raw and raw.strip() == "*":
+            return ["*"]
         if raw:
-            return [o.strip() for o in raw.split(",") if o.strip() and o.strip() != "*"]
+            return [o.strip() for o in raw.split(",") if o.strip()]
         return [
+            "*",
+            "https://mplads-ai-command-center-ai-powered.onrender.com",
             "http://localhost:5173",
             "http://127.0.0.1:5173",
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
         ]
 
     # Security & Authentication (Phase 6.3)
