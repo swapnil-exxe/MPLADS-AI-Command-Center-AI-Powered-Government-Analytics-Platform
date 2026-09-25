@@ -13,9 +13,8 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 const PYTHON_PORT = process.env.PYTHON_PORT || 8001;
 
-// Global Middleware
+// Global CORS
 app.use(cors());
-app.use(express.json());
 
 // 1. Spawn Python FastAPI Subservice
 console.log(`[Node.js Server] Spawning Python Uvicorn subservice on port ${PYTHON_PORT}...`);
@@ -40,7 +39,7 @@ pythonProcess.on('close', (code) => {
   console.log(`[Node.js Server] Python subservice exited with code ${code}`);
 });
 
-// 2. HTTP Proxy Setup for FastAPI Endpoints
+// 2. HTTP Proxy Setup for FastAPI Endpoints (Mounted BEFORE body parsers to prevent POST stream drain)
 let httpProxy;
 try {
   httpProxy = require('http-proxy-middleware');
@@ -60,7 +59,11 @@ if (httpProxy && httpProxy.createProxyMiddleware) {
   app.use('/openapi.json', apiProxy);
 }
 
-// 3. Serve Frontend Production Build Artifacts
+// 3. Express Body Parsers for local Node routes only
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// 4. Serve Frontend Production Build Artifacts
 const frontendDist = path.join(__dirname, '../frontend/dist');
 const localDist = path.join(__dirname, 'dist');
 
