@@ -3,7 +3,7 @@ import axios from 'axios';
 export function getApiBaseUrl(): string {
   let envUrl = import.meta.env.VITE_API_BASE_URL;
   if (!envUrl || !envUrl.trim()) {
-    return '/api/v1';
+    return 'https://mplads-ai-command-center-ai-powered.onrender.com/api/v1';
   }
   envUrl = envUrl.trim();
   if (envUrl.endsWith('/')) {
