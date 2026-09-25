@@ -89,7 +89,7 @@ if dist_dir.exists():
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        if full_path.startswith("api/") or full_path.startswith("docs") or full_path.startswith("openapi.json"):
+        if full_path.startswith("api/") or full_path.startswith("v1/") or full_path.startswith("health") or full_path.startswith("docs") or full_path.startswith("openapi.json"):
             raise HTTPException(status_code=404, detail="Route not found")
         file_path = dist_dir / full_path
         if file_path.exists() and file_path.is_file():
