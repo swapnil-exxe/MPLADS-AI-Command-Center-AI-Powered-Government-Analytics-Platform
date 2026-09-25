@@ -39,9 +39,17 @@
 
 This application runs strictly locally on your machine, connected directly to the real Supabase PostgreSQL dataset.
 
+### Project Architecture: Strict 2-Folder Layout
+```
+MPLADS-AI-Command-Center/
+├── frontend/    # React SPA UI (Vite + Tailwind CSS + TypeScript)
+└── backend/     # Python FastAPI Gateway, Scraper, ML Models, Database & Pipelines
+```
+
 ### Starting the Backend API (Terminal 1)
 ```bash
-PYTHONPATH=. uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload
+cd backend
+PYTHONPATH=. python3 -m uvicorn api.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ### Starting the Frontend SPA (Terminal 2)
@@ -55,6 +63,7 @@ npm run dev -- --host 127.0.0.1 --port 5173
 - **FastAPI Backend**: `http://127.0.0.1:8000`
 - **REST API Base URL**: `http://127.0.0.1:8000/api/v1`
 - **Interactive Swagger Docs**: `http://127.0.0.1:8000/docs`
+
 
 ---
 
@@ -577,88 +586,72 @@ The platform features a test suite of **85 automated tests** across 9 dedicated 
 
 ---
 
-## 17. Project Directory Structure
+### 17. Project Directory Structure
 
-```
-MPLADS_Analytics/
-├── .env                              # Environment variables (Database URL, JWT secret)
+```text
+MPLADS-AI-Command-Center/
+├── .env                              # Root environment variables (Database URL, JWT secret)
 ├── .env.example                      # Production environment template
 ├── .gitignore                        # Git exclusion rules
-├── MPLADS_Postman_Collection.json    # Complete ready-to-use Postman collection
-├── PROJECT_README.md                 # Complete platform documentation (This file)
-├── README.md                         # Repository index
-├── requirements.txt                  # Locked Python dependencies
-├── MPLADS Governance PlatformPS_102                     # Official MPLADS Problem Statement text
+├── README.md                         # Platform Documentation & System Architecture Index
 │
-├── api/                              # Production FastAPI Backend Package
-│   ├── __init__.py
-│   ├── config.py                     # App settings, CORS, JWT secrets, rate limits
-│   ├── dependencies.py               # Database session lifecycle & pagination dependencies
-│   ├── main.py                       # FastAPI entrypoint, middleware, router mounts
-│   ├── auth/                         # Security & RBAC Engine
-│   │   ├── __init__.py
-│   │   ├── dependencies.py           # get_current_user, hybrid DB check, require_roles
-│   │   ├── limiter.py                # SlowAPI rate limiter configuration
-│   │   ├── scoping.py                # Server-side SQL predicate injection & 403 checks
-│   │   └── security.py               # Bcrypt hashing, dummy timing attack hash, JWT encode/decode
-│   ├── routers/                      # Modular API Route Controllers
-│   │   ├── __init__.py
-│   │   ├── auth.py                   # /auth/login, /auth/me, /auth/users
-│   │   ├── cost_anomalies.py         # /analytics/cost-anomalies
-│   │   ├── delays.py                 # /analytics/delays
-│   │   ├── duplicate_works.py        # /analytics/duplicate-works
-│   │   ├── fund_anomalies.py         # /analytics/fund-anomalies
-│   │   ├── health.py                 # /health, /meta/filters
-│   │   ├── summaries.py              # /analytics/district-summary, /mp-summary
-│   │   └── works.py                  # /works, /works/{work_id:path}
-│   └── schemas/                      # Pydantic v2 Strict Data Models
-│       ├── __init__.py
-│       ├── auth.py                   # LoginRequest, TokenResponse, UserRead, UserCreate
-│       ├── common.py                 # PaginationMeta, PaginatedResponse, HealthCheckResponse
-│       ├── cost_anomaly.py           # CostAnomalyItem, CostAnomalyDetail
-│       ├── delay.py                  # DelayItem, DelayDetail
-│       ├── duplicate_work.py         # DuplicatePairItem, WorkDuplicateLookupResponse
-│       ├── fund_anomaly.py           # FundAnomalyItem, FundAnomalyDetail
-│       ├── summaries.py              # DistrictSummaryItem, MPSummaryItem
-│       └── works.py                  # WorkListItem, WorkDetail, IndependentModelProfiles
+├── frontend/                         # React SPA UI (Vite + Tailwind CSS + TypeScript)
+│   ├── dist/                         # Single-file production SPA build bundle
+│   ├── index.html                    # Root HTML document template
+│   ├── node_modules/                 # Node.js dependencies
+│   ├── package.json                  # Frontend package dependencies & scripts
+│   ├── public/                       # Static public assets (videos, icons)
+│   ├── src/                          # React application source code
+│   │   ├── components/               # UI components, layout, navbar, cards & filters
+│   │   ├── pages/                    # Stakeholder dashboards & analytics pages
+│   │   ├── services/                 # Axios API client & authentication context
+│   │   └── types/                    # TypeScript data models & interfaces
+│   ├── tailwind.config.js            # Tailwind CSS styling configuration
+│   └── vite.config.ts                # Vite bundler & singlefile configuration
 │
-├── data/                             # Data Layer (Pipelines, Outputs & Reports)
-│   ├── features/                     # Feature Engineering Parquet Datasets
-│   ├── model_outputs/                # Scored Model Outputs (Parquet)
-│   ├── original/                     # Raw Portal Source CSVs
-│   ├── processed/                    # Cleaned & Reconciled Datasets
-│   └── reports/                      # Verification & Quality Audit Markdown Reports
-│
-├── data_pipeline/                    # Raw Ingestion & Normalization Modules
-│   ├── amounts.py, cleaners.py, dates.py, geography.py, pipeline.py, validators.py
-│
-├── database/                         # Relational Database Layer
-│   ├── connection.py                 # SQLAlchemy engine & session maker
-│   ├── models.py                     # Relational ORM models (works, results, users)
-│   └── seed_users.py                 # Stakeholder demo account seeding CLI
-│
-├── feature_engineering/              # Feature Extraction Modules
-│   ├── canonical.py, duplicate_candidates.py, expenditure_features.py, work_features.py
-│
-├── ml_models/                        # Machine Learning Model Packages
-│   ├── cost_anomaly/                 # Model 1: Peer Isolation Forest
-│   ├── duplicate_work/               # Model 2: Sentence Transformers & Proximity
-│   └── fund_expenditure_anomaly/     # Model 3: Expenditure Isolation Forest
-│
-├── rule_engines/                     # Deterministic Rule Engines
-│   └── delay/                        # Phase 5: Statutory SLA Delay Engine
-│
-└── tests/                            # Comprehensive Automated Test Suites
-    ├── conftest.py                   # Reusable test fixtures & authenticated headers
-    ├── test_api.py                   # 15 Core API integration tests
-    ├── test_auth_rbac.py             # 19 Authentication & RBAC tests
-    ├── test_database_ingestion.py    # 6 Relational integrity tests
-    ├── test_delay_rules.py           # 7 Statutory delay rule tests
-    ├── test_feature_engineering.py   # 10 Feature engineering tests
-    ├── test_model1_cost_anomaly.py   # 6 Cost anomaly ML tests
-    ├── test_model2_duplicate_work.py # 6 Duplicate detection tests
-    ├── test_model3_fund_expenditure.py # 6 Fund anomaly tests
-    └── test_pipeline.py              # 10 Data cleaning tests
+└── backend/                          # Production Backend & Machine Learning Infrastructure
+    ├── .env                          # Local backend secrets & Supabase DATABASE_URL
+    ├── requirements.txt              # Locked Python dependencies
+    ├── FILE_ORGANIZATION_REPORT.md   # Architectural dataset audit report
+    ├── PROJECT_STRUCTURE.md          # Technical component hierarchy documentation
+    │
+    ├── api/                          # Production FastAPI Backend Package
+    │   ├── main.py                   # FastAPI entrypoint, CORS & security middleware
+    │   ├── config.py                 # Application settings & JWT secret management
+    │   ├── dependencies.py           # Database session & request context dependencies
+    │   ├── auth/                     # Security, timing defense & RBAC scoping engine
+    │   ├── routers/                  # Modular REST controllers (works, cost, duplicate, delay)
+    │   └── schemas/                  # Pydantic v2 data validation schemas
+    │
+    ├── database/                     # Relational Database Layer & Seeding
+    │   ├── connection.py             # Thread-safe SQLAlchemy engine & Supabase pooler
+    │   ├── models.py                 # Relational ORM schemas (works, results, users)
+    │   ├── schema.sql                # Supabase PostgreSQL schema DDL
+    │   └── seed_users.py             # 4 Stakeholder demo account provisioner
+    │
+    ├── scraper/                      # Automated Web Scraper & Monitoring Engine
+    │   ├── client.py                 # Resilient HTTP web client
+    │   ├── spider.py                 # Multi-page parser & link discovery
+    │   ├── normalize.py              # Data normalizer & snapshot generator
+    │   └── scheduler.py              # Scraper cron scheduler
+    │
+    ├── ml_models/                    # Machine Learning Analytical Modules
+    │   ├── cost_anomaly/             # Model 1: Peer Grouped Isolation Forest
+    │   ├── duplicate_work/           # Model 2: Sentence Transformers & Structural Proximity
+    │   └── fund_expenditure_anomaly/ # Model 3: Multi-variate Expenditure Isolation Forest
+    │
+    ├── rule_engines/                 # Statutory SLA Rule Engine
+    │   └── delay/                    # Phase 5: 75-Day Sanction SLA Rule Scorer
+    │
+    ├── data_pipeline/                # Data Cleaning & Ingestion Pipeline
+    ├── feature_engineering/          # Multi-dimensional Feature Registry Engine
+    ├── analytics/                    # Trend Aggregations & Geographical Rollups
+    ├── models/                       # Trained ML Model Artifacts (.joblib, .json)
+    ├── tests/                        # 85/85 Passing Pytest Test Suites
+    ├── scripts/                      # Pipeline Execution & Quality Audit Scripts
+    ├── data/                         # Datasets (raw, processed, features, model_outputs)
+    ├── docs/                         # Platform Documentation Book & Architecture Audits
+    └── notebooks/                    # Data Profiling & Exploratory Analysis Notebooks
 ```
 
 ---
